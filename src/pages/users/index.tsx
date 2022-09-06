@@ -1,37 +1,13 @@
 import { Box, Button, Checkbox, Flex, Heading, Icon, Spinner, Table, Tbody, Td, Text, Th, Thead, Tr, useBreakpointValue } from "@chakra-ui/react";
 import { Header } from "../../components/Header";
-
-import { useQuery } from 'react-query'
 import { Sidebar } from "../../components/Sidebar";
 import { RiAddLine, RiPencilLine } from 'react-icons/ri'
 import { Pagination } from "../../components/Pagination";
 import Link from "next/link";
-
-type User = {
-  name: string;
-  email: string;
-  createdAt: string;
-}
+import { User, useUsers } from "../../services/hooks/useUsers";
 
 export default function UserList() {
-
-  const { data, isLoading, error } = useQuery('users', async () => {
-    const data = await fetch('http://localhost:3000/api/users')
-    const response = await data.json()
-
-    const users = response?.users.map((user: User) => ({
-      ...user,
-      createdAt: new Date(user.createdAt).toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-      })
-    }));
-
-    return users
-  }, {
-    staleTime: 1000 * 5
-  })
+  const { data, isLoading, error, isFetching } = useUsers()
 
   const isWideVersion = useBreakpointValue({
     base: false,
@@ -45,7 +21,10 @@ export default function UserList() {
         <Sidebar />
         <Box flex="1" borderRadius={8} bg="gray.800" p="8">
           <Flex mb="8" justify="space-between" align="center">
-            <Heading size="lg" fontWeight="normal">Usuários</Heading>
+            <Heading size="lg" fontWeight="normal">
+              Usuários
+              {!isLoading && isFetching && <Spinner ml="4" size="sm" color="grey.500" />}
+              </Heading>
             <Link href="/users/create" passHref>
               <Button as="a" size="sm" fontSize="sm" colorScheme="pink" leftIcon={<Icon as={RiAddLine} fontSize="20" />}>Criar novo</Button>
             </Link>
