@@ -8,17 +8,30 @@ import { User, useUsers } from "../../services/hooks/useUsers";
 import { useState } from 'react'
 import { queryClient } from "../../services/queryClient";
 import { api } from "../../services/api";
+import { GetServerSideProps } from "next";
+import { getUsers } from '../../services/hooks/useUsers'
 
-export default function UserList() {
+interface UserListProps {
+  users: User[]
+  totalCount: number
+}
+
+
+export default function UserList({ users, totalCount }: UserListProps) {
   const [page, setPage] = useState<number>(1)
-  const { data, isLoading, error, isFetching } = useUsers(page)
+  const result = useUsers(page, {
+    initialData: users
+  })
+
+  const data = result.data as UserListProps
+  const { isLoading, error, isFetching } = result
 
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true
   })
 
-  async function handlePrefetchUser(userId: number) {
+  async function handlePrefetchUser(userId: string) {
     await queryClient.prefetchQuery(['user', userId], async () => {
       const response = await api.get(`users/${userId}`)
 
@@ -74,7 +87,7 @@ export default function UserList() {
                       </Td>
                       <Td>
                         <Box>
-                          <Link color="purple.400" onMouseEnter={() => handlePrefetchUser(Number(user.id))}>
+                          <Link color="purple.400" onMouseEnter={() => handlePrefetchUser(String(user.id))}>
                             <Text fontWeight="bold">{user?.name}</Text>
                           </Link>
                           <Text fontSize="sm" color="gray.300">{user?.email}</Text>
@@ -105,4 +118,15 @@ export default function UserList() {
       </Flex>
     </Box>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  const { users, totalCount } = await getUsers(1)
+  
+  return {
+    props: {
+      users,
+      totalCount
+    }
+  }
 }
